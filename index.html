@@ -1,0 +1,926 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>面会セルフ受付</title>
+  <style>
+    :root { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", sans-serif; }
+    body { margin: 0; background: #f6f7fb; color: #111; }
+    header { padding: 16px 16px 8px; }
+    h1 { margin: 0; font-size: 22px; }
+    .sub { color:#555; font-size: 14px; margin-top: 6px; }
+
+    .wrap { padding: 12px 16px 24px; max-width: 980px; margin: 0 auto; }
+    .card { background: #fff; border-radius: 14px; padding: 14px; box-shadow: 0 2px 10px rgba(0,0,0,.06); margin: 12px 0; }
+    .label { font-weight: 700; font-size: 16px; }
+    .hint { color:#666; font-size: 13px; margin-top: 4px; }
+
+    .btns { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }
+    .btns3 { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; }
+    .btns4 { display:grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 10px; }
+
+    button.choice, button.smallBtn {
+      border: 2px solid #cfd6e6; background: #fff; padding: 14px 10px;
+      border-radius: 12px; font-size: 18px; font-weight: 650;
+      touch-action: manipulation;
+    }
+    button.choice.selected { border-color: #2b6cff; box-shadow: 0 0 0 3px rgba(43,108,255,.18); }
+    button.smallBtn { font-size: 16px; padding: 12px 10px; }
+    button.smallBtn.primaryLike { background:#2b6cff; color:#fff; border-color:#2b6cff; }
+    button.smallBtn.dangerLike { background:#e53935; color:#fff; border-color:#e53935; }
+
+    input[type="text"], select{
+      width: 100%; padding: 14px 12px; font-size: 18px; border-radius: 12px;
+      border: 2px solid #cfd6e6; outline: none; background:#fff;
+    }
+    input.bad, select.bad { border-color:#b00020; box-shadow: 0 0 0 3px rgba(176,0,32,.18); }
+    input:focus, select:focus { border-color:#2b6cff; box-shadow: 0 0 0 3px rgba(43,108,255,.18); }
+
+    .primary {
+      width: 100%; padding: 16px 14px; border-radius: 14px;
+      border: none; background: #2b6cff; color:#fff; font-size: 20px; font-weight: 800;
+      touch-action: manipulation;
+    }
+    .primary:disabled { opacity: .45; }
+    .danger { background:#e53935; }
+    .ghost { background:#fff; border:2px solid #cfd6e6; color:#111; }
+    .two { display:grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    .bigtime { font-size: 40px; font-weight: 900; letter-spacing: .5px; }
+    .ok { color:#0b7a2e; font-weight: 800; }
+    .ng { color:#b00020; font-weight: 900; }
+
+    .alertBox{
+      margin-top:10px; padding:12px; border-radius:12px;
+      border:2px solid #b00020; background:#fff5f7;
+    }
+    .alertTitle{ font-size:18px; font-weight:900; color:#b00020; }
+    .alertText{ margin-top:6px; color:#333; font-size:14px; line-height:1.4; }
+
+    table { width:100%; border-collapse: collapse; font-size: 13px; }
+    th, td { border-bottom: 1px solid #e7eaf3; padding: 10px 6px; text-align:left; vertical-align: top; }
+    .muted { color:#666; }
+
+    .sectionTitle { font-size: 18px; font-weight: 900; margin: 0 0 6px; }
+    .box { border:2px dashed #d4daea; border-radius: 14px; padding: 12px; background:#fbfcff; }
+
+    /* モーダル共通 */
+    .modalBack {
+      position: fixed; inset: 0; background: rgba(0,0,0,.45);
+      display:none; align-items:center; justify-content:center; padding: 16px;
+      z-index: 50;
+    }
+    .modal {
+      background:#fff; border-radius:16px; padding:16px; width: min(560px, 100%);
+      box-shadow: 0 10px 30px rgba(0,0,0,.22);
+    }
+    .modal h2 { margin:0; font-size:22px; }
+    .modal p { margin:10px 0 0; font-size:16px; line-height:1.5; }
+    .modal .closeRow { margin-top:14px; display:flex; gap:10px; }
+    .modal button { flex:1; }
+
+    /* 看護師モーダル */
+    .modal.nurse { border: 2px solid #b00020; }
+    .modal.nurse h2 { color:#b00020; }
+
+    /* 体温テンキー */
+    .modal.keypad { border:2px solid #cfd6e6; }
+    .tempDisplay {
+      font-size: 44px; font-weight: 900; letter-spacing: .5px;
+      border:2px solid #cfd6e6; border-radius: 14px; padding: 10px 12px;
+      text-align: center; margin-top: 12px;
+    }
+    .kpGrid{
+      margin-top: 12px;
+      display:grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 10px;
+    }
+    .kpBtn{
+      padding: 16px 10px; border-radius: 14px;
+      border:2px solid #cfd6e6; background:#fff;
+      font-size: 26px; font-weight: 900;
+      touch-action: manipulation;
+    }
+    .kpRow2{
+      margin-top:10px;
+      display:grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    }
+    .kpBtn.primaryLike { background:#2b6cff; color:#fff; border-color:#2b6cff; }
+    .kpBtn.dangerLike { background:#e53935; color:#fff; border-color:#e53935; }
+  </style>
+</head>
+<body>
+<header>
+  <h1>面会セルフ受付</h1>
+  <div class="sub">受付時間：13:00〜18:00 ／ 面会：10分（多少の前後は許容）</div>
+</header>
+
+<div class="wrap">
+
+  <div class="card">
+    <div class="label">① 面会予約</div>
+    <div class="btns" style="margin-top:10px;">
+      <button class="choice" data-group="reserve" data-value="あり">予約あり</button>
+      <button class="choice" data-group="reserve" data-value="なし">予約なし</button>
+    </div>
+
+    <div id="reserveTimeBlock" style="margin-top:12px; display:none;">
+      <div class="label">予約時刻（予約ありの場合のみ）</div>
+      <div class="hint">13:00〜18:00の範囲で選択（10分刻み）</div>
+      <select id="reserveTime" style="margin-top:10px;"></select>
+      <div id="reserveErr" class="hint" style="margin-top:8px;"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="label">② 患者名（入力すると自動でカタカナに変換）</div>
+    <div class="hint">例：たなか たろう → タナカ タロウ（「ー」「・」「スペース」は可）</div>
+    <input id="patientKana" type="text" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false"
+           placeholder="例：タナカ タロウ" style="margin-top:10px;" />
+    <div id="kanaErr" class="hint" style="margin-top:8px;"></div>
+  </div>
+
+  <div class="card">
+    <div class="sectionTitle">③ 面会者情報</div>
+
+    <!-- 面会者1 -->
+    <div class="box">
+      <div class="label">面会者 1</div>
+
+      <div class="label" style="margin-top:10px;">患者との関係性</div>
+      <div class="hint">タップして選択</div>
+      <div class="btns3" id="relationBtns1" style="margin-top:10px;"></div>
+      <div id="relErr1" class="hint" style="margin-top:8px;"></div>
+
+      <div class="label" style="margin-top:12px;">体温（℃）</div>
+      <div class="hint">タップするとテンキーが出ます（例：36.7）</div>
+      <input id="temp1" type="text" inputmode="none" readonly placeholder="タップして入力（例：36.7）" style="margin-top:10px;" />
+      <div id="tempErr1" class="hint" style="margin-top:8px;"></div>
+    </div>
+
+    <!-- 追加ボタン -->
+    <div id="addVisitorRow" style="margin-top:12px;">
+      <button id="addVisitorBtn" class="smallBtn primaryLike" type="button">＋ 面会者を1人追加</button>
+      <div class="hint">※最大2名まで</div>
+    </div>
+
+    <!-- 面会者2（追加時のみ表示） -->
+    <div id="visitor2Block" class="box" style="margin-top:12px; display:none;">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+        <div class="label">面会者 2</div>
+        <button id="removeVisitorBtn" class="smallBtn dangerLike" type="button">削除</button>
+      </div>
+
+      <div class="label" style="margin-top:10px;">患者との関係性</div>
+      <div class="hint">タップして選択</div>
+      <div class="btns3" id="relationBtns2" style="margin-top:10px;"></div>
+      <div id="relErr2" class="hint" style="margin-top:8px;"></div>
+
+      <div class="label" style="margin-top:12px;">体温（℃）</div>
+      <div class="hint">タップするとテンキーが出ます（例：36.7）</div>
+      <input id="temp2" type="text" inputmode="none" readonly placeholder="タップして入力（例：36.7）" style="margin-top:10px;" />
+      <div id="tempErr2" class="hint" style="margin-top:8px;"></div>
+    </div>
+
+    <div id="tempAlert" style="display:none;" class="alertBox">
+      <div class="alertTitle">37.5℃以上の面会者がいます。看護師を呼んでください。</div>
+      <div class="alertText">受付は完了できません。スタッフへお声がけください。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="label">④ （任意）補足</div>
+    <div class="hint">例：病室番号など（院内規程に従ってください）</div>
+    <input id="note" type="text" placeholder="例：305号室" style="margin-top:10px;" />
+  </div>
+
+  <div class="card">
+    <div class="label">⑤ 受付（開始）</div>
+    <div class="hint">開始ボタンを押すと「受付時刻」と「終了予定（+10分）」が記録されます</div>
+    <div id="timeMsg" class="hint" style="margin-top:10px;"></div>
+    <button id="startBtn" class="primary" style="margin-top:10px;" disabled>受付開始（今から10分）</button>
+    <div id="result" style="margin-top:14px;"></div>
+  </div>
+
+  <div class="card">
+    <div class="label">管理（端末内に保存された受付ログ）</div>
+    <div class="two" style="margin-top:10px;">
+      <button id="exportBtn" class="primary ghost">CSV出力</button>
+      <button id="clearBtn" class="primary danger">全ログ削除</button>
+    </div>
+    <div class="hint muted" style="margin-top:10px;">
+      ※この版は「iPad内に保存」です。複数端末で共有したい場合はサーバ保存版にできます。
+    </div>
+    <div style="margin-top:12px; overflow:auto;">
+      <table>
+        <thead>
+          <tr>
+            <th>受付</th><th>終了予定</th><th>患者名(ｶﾀｶﾅ)</th><th>予約</th><th>予約時刻</th>
+            <th>面会者1</th><th>面会者2</th><th>補足</th>
+          </tr>
+        </thead>
+        <tbody id="logBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- 看護師呼び出しモーダル -->
+<div class="modalBack" id="nurseModalBack" aria-hidden="true">
+  <div class="modal nurse" role="dialog" aria-modal="true" aria-labelledby="nurseTitle">
+    <h2 id="nurseTitle">看護師を呼んでください</h2>
+    <p id="nurseMsg">高体温の面会者がいます。受付は完了できません。スタッフへお声がけください。</p>
+    <div class="closeRow">
+      <button class="primary danger" id="closeNurseModalBtn">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<!-- 体温テンキーモーダル（共通1つで、入力対象を切り替える） -->
+<div class="modalBack" id="tempModalBack" aria-hidden="true">
+  <div class="modal keypad" role="dialog" aria-modal="true" aria-labelledby="tempTitle">
+    <h2 id="tempTitle">体温を入力</h2>
+    <div class="hint">例：36.7（小数は1桁まで）</div>
+    <div id="tempDisplay" class="tempDisplay">--.-</div>
+
+    <div class="kpGrid" id="kpGrid"></div>
+
+    <div class="kpRow2">
+      <button class="kpBtn dangerLike" id="kpClear" type="button">クリア</button>
+      <button class="kpBtn primaryLike" id="kpOk" type="button">確定</button>
+    </div>
+
+    <div class="closeRow">
+      <button class="primary ghost" id="kpCancel" type="button">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ===== 設定 =====
+  const RELATIONS = ["配偶者", "子", "親", "兄弟姉妹", "親族", "友人", "その他"];
+  const VISIT_MINUTES = 10;
+  const OPEN_HOUR = 13;
+  const CLOSE_HOUR = 18; // 18:00以降はNG
+  const STORAGE_KEY = "visit_logs_v5";
+
+  // 全角カタカナ + 長音ー + 中点・ + スペース（全角/半角）を許可
+  const KATAKANA_RE = /^[\u30A0-\u30FFー・ 　]+$/;
+
+  // 体温閾値
+  const TEMP_ALERT = 37.5;
+
+  // ===== 状態 =====
+  let selectedReserve = "";
+  let reserveTimeValid = true;
+
+  let patientKanaValid = false;
+
+  // 面会者1（必須）
+  let visitor1 = { relation: "", temp: "", relValid:false, tempValid:false, tempHigh:false };
+
+  // 面会者2（任意）
+  let visitor2Enabled = false;
+  let visitor2 = { relation: "", temp: "", relValid:false, tempValid:false, tempHigh:false };
+
+  // テンキー対象（"temp1" or "temp2"）
+  let activeTempFieldId = "temp1";
+  let tempDraft = "";
+
+  // ===== ユーティリティ =====
+  function pad2(n){ return String(n).padStart(2,"0"); }
+  function fmt(dt){
+    return `${dt.getFullYear()}-${pad2(dt.getMonth()+1)}-${pad2(dt.getDate())} ${pad2(dt.getHours())}:${pad2(dt.getMinutes())}`;
+  }
+  function addMinutes(dt, mins){
+    return new Date(dt.getTime() + mins*60*1000);
+  }
+  function inReceptionWindow(dt){
+    const h = dt.getHours();
+    const m = dt.getMinutes();
+    if (h < OPEN_HOUR) return false;
+    if (h > CLOSE_HOUR) return false;
+    if (h === CLOSE_HOUR && m >= 0) return false;
+    return true;
+  }
+  function loadLogs(){
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); }
+    catch { return []; }
+  }
+  function saveLogs(logs){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(logs));
+  }
+
+  // ひらがな→カタカナ
+  function hiraToKata(str){
+    return str.replace(/[\u3041-\u3096]/g, ch => String.fromCharCode(ch.charCodeAt(0) + 0x60));
+  }
+
+  // 簡易ビープ
+  let audioCtx = null;
+  function beep(){
+    try{
+      if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const ctx = audioCtx;
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = "sine";
+      o.frequency.value = 880;
+      g.gain.value = 0.05;
+      o.connect(g); g.connect(ctx.destination);
+      o.start();
+      setTimeout(()=>{ o.stop(); }, 180);
+    }catch(e){}
+  }
+
+  function anyHighTemp(){
+    if(visitor1.tempHigh) return true;
+    if(visitor2Enabled && visitor2.tempHigh) return true;
+    return false;
+  }
+
+  function updateStartBtnState(){
+    const btn = document.getElementById("startBtn");
+
+    const v1ok = visitor1.relValid && visitor1.tempValid;
+    const v2ok = (!visitor2Enabled) || (visitor2.relValid && visitor2.tempValid);
+
+    btn.disabled = !(
+      selectedReserve &&
+      reserveTimeValid &&
+      patientKanaValid &&
+      v1ok &&
+      v2ok &&
+      !anyHighTemp()
+    );
+  }
+
+  // ===== 予約時刻 =====
+  const reserveSelect = document.getElementById("reserveTime");
+  function buildReserveTimes(){
+    reserveSelect.innerHTML = "";
+    const opt0 = document.createElement("option");
+    opt0.value = "";
+    opt0.textContent = "選択してください";
+    reserveSelect.appendChild(opt0);
+
+    for(let h=OPEN_HOUR; h<CLOSE_HOUR; h++){
+      for(let m=0; m<60; m+=10){
+        const t = `${pad2(h)}:${pad2(m)}`;
+        const o = document.createElement("option");
+        o.value = t;
+        o.textContent = t;
+        reserveSelect.appendChild(o);
+      }
+    }
+  }
+  buildReserveTimes();
+
+  function handleReserveUI(){
+    const block = document.getElementById("reserveTimeBlock");
+    if(selectedReserve === "あり"){
+      block.style.display = "block";
+      validateReserveTime();
+    } else {
+      block.style.display = "none";
+      reserveSelect.value = "";
+      reserveTimeValid = true;
+      reserveSelect.classList.remove("bad");
+      document.getElementById("reserveErr").innerHTML = "";
+    }
+    updateStartBtnState();
+  }
+
+  function validateReserveTime(){
+    const err = document.getElementById("reserveErr");
+    if(selectedReserve !== "あり"){
+      reserveTimeValid = true;
+      reserveSelect.classList.remove("bad");
+      err.innerHTML = "";
+      updateStartBtnState();
+      return;
+    }
+    if(!reserveSelect.value){
+      reserveTimeValid = false;
+      reserveSelect.classList.add("bad");
+      err.innerHTML = `<span class="ng">予約時刻を選択してください。</span>`;
+      updateStartBtnState();
+      return;
+    }
+    reserveTimeValid = true;
+    reserveSelect.classList.remove("bad");
+    err.innerHTML = `<span class="ok">OK</span>`;
+    updateStartBtnState();
+  }
+  reserveSelect.addEventListener("change", validateReserveTime);
+
+  // 予約あり/なしボタン
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest("button.choice");
+    if(!btn) return;
+    const group = btn.dataset.group;
+    const value = btn.dataset.value;
+
+    document.querySelectorAll(`button.choice[data-group="${group}"]`).forEach(x => x.classList.remove("selected"));
+    btn.classList.add("selected");
+
+    if(group === "reserve") {
+      selectedReserve = value;
+      handleReserveUI();
+    }
+    updateStartBtnState();
+  });
+
+  // ===== 患者名（自動変換 + バリデーション） =====
+  const patientKana = document.getElementById("patientKana");
+  const kanaErr = document.getElementById("kanaErr");
+
+  function normalizePatientKana(){
+    const before = patientKana.value;
+    const after = hiraToKata(before);
+    if(after !== before){
+      const pos = patientKana.selectionStart;
+      patientKana.value = after;
+      try { patientKana.setSelectionRange(pos, pos); } catch {}
+    }
+  }
+
+  function validatePatientKana(){
+    normalizePatientKana();
+    const v = patientKana.value.trim();
+
+    if(!v){
+      patientKanaValid = false;
+      patientKana.classList.remove("bad");
+      kanaErr.innerHTML = `<span class="ng">患者名を入力してください（自動でカタカナ変換されます）。</span>`;
+      updateStartBtnState();
+      return;
+    }
+    if(!KATAKANA_RE.test(v)){
+      patientKanaValid = false;
+      patientKana.classList.add("bad");
+      kanaErr.innerHTML = `<span class="ng">カタカナ以外が含まれています（記号は「ー」「・」「スペース」のみ可）。</span>`;
+      updateStartBtnState();
+      return;
+    }
+    patientKanaValid = true;
+    patientKana.classList.remove("bad");
+    kanaErr.innerHTML = `<span class="ok">OK（カタカナ）</span>`;
+    updateStartBtnState();
+  }
+  patientKana.addEventListener("input", validatePatientKana);
+  patientKana.addEventListener("blur", validatePatientKana);
+  validatePatientKana();
+
+  // ===== 関係性ボタン（面会者1/2） =====
+  function renderRelationButtons(containerId, visitorIndex){
+    const el = document.getElementById(containerId);
+    el.innerHTML = "";
+    RELATIONS.forEach(r => {
+      const b = document.createElement("button");
+      b.className = "choice";
+      b.type = "button";
+      b.textContent = r;
+      b.dataset.group = `relation${visitorIndex}`;
+      b.dataset.value = r;
+      el.appendChild(b);
+    });
+  }
+  renderRelationButtons("relationBtns1", 1);
+  renderRelationButtons("relationBtns2", 2);
+
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest("button.choice");
+    if(!btn) return;
+    const group = btn.dataset.group;
+    const value = btn.dataset.value;
+
+    if(group === "relation1"){
+      document.querySelectorAll(`button.choice[data-group="relation1"]`).forEach(x => x.classList.remove("selected"));
+      btn.classList.add("selected");
+      visitor1.relation = value;
+      validateRelation(1);
+      updateStartBtnState();
+    }
+    if(group === "relation2"){
+      document.querySelectorAll(`button.choice[data-group="relation2"]`).forEach(x => x.classList.remove("selected"));
+      btn.classList.add("selected");
+      visitor2.relation = value;
+      validateRelation(2);
+      updateStartBtnState();
+    }
+  });
+
+  function validateRelation(idx){
+    if(idx === 1){
+      if(!visitor1.relation){
+        visitor1.relValid = false;
+        document.getElementById("relErr1").innerHTML = `<span class="ng">関係性を選択してください。</span>`;
+      } else {
+        visitor1.relValid = true;
+        document.getElementById("relErr1").innerHTML = `<span class="ok">OK</span>`;
+      }
+    } else {
+      if(!visitor2Enabled) {
+        visitor2.relValid = false;
+        document.getElementById("relErr2").innerHTML = ``;
+        return;
+      }
+      if(!visitor2.relation){
+        visitor2.relValid = false;
+        document.getElementById("relErr2").innerHTML = `<span class="ng">関係性を選択してください。</span>`;
+      } else {
+        visitor2.relValid = true;
+        document.getElementById("relErr2").innerHTML = `<span class="ok">OK</span>`;
+      }
+    }
+  }
+
+  // ===== 面会者追加/削除 =====
+  const addBtn = document.getElementById("addVisitorBtn");
+  const removeBtn = document.getElementById("removeVisitorBtn");
+  const visitor2Block = document.getElementById("visitor2Block");
+  const addRow = document.getElementById("addVisitorRow");
+
+  addBtn.addEventListener("click", () => {
+    visitor2Enabled = true;
+    visitor2 = { relation: "", temp: "", relValid:false, tempValid:false, tempHigh:false };
+    visitor2Block.style.display = "block";
+    addRow.style.display = "none";
+    // リセット表示
+    document.querySelectorAll(`button.choice[data-group="relation2"]`).forEach(x => x.classList.remove("selected"));
+    document.getElementById("temp2").value = "";
+    document.getElementById("tempErr2").innerHTML = `<span class="ng">体温を入力してください。</span>`;
+    validateRelation(2);
+    validateTemp(2, false);
+    updateHighTempUI();
+    updateStartBtnState();
+  });
+
+  removeBtn.addEventListener("click", () => {
+    visitor2Enabled = false;
+    visitor2 = { relation: "", temp: "", relValid:false, tempValid:false, tempHigh:false };
+    visitor2Block.style.display = "none";
+    addRow.style.display = "block";
+    updateHighTempUI();
+    updateStartBtnState();
+  });
+
+  // ===== 看護師モーダル =====
+  function showNurseModal(msg){
+    document.getElementById("nurseMsg").innerHTML = msg;
+    const back = document.getElementById("nurseModalBack");
+    back.style.display = "flex";
+    back.setAttribute("aria-hidden", "false");
+  }
+  function hideNurseModal(){
+    const back = document.getElementById("nurseModalBack");
+    back.style.display = "none";
+    back.setAttribute("aria-hidden", "true");
+  }
+  document.getElementById("closeNurseModalBtn").addEventListener("click", hideNurseModal);
+
+  function updateHighTempUI(){
+    const alert = document.getElementById("tempAlert");
+    if(anyHighTemp()){
+      alert.style.display = "block";
+    } else {
+      alert.style.display = "none";
+    }
+  }
+
+  // ===== 体温テンキー（共通） =====
+  const tempModalBack = document.getElementById("tempModalBack");
+  const tempDisplay = document.getElementById("tempDisplay");
+  const kpGrid = document.getElementById("kpGrid");
+
+  const KP_KEYS = ["1","2","3","4","5","6","7","8","9",".","0","⌫"];
+
+  function buildKeypad(){
+    kpGrid.innerHTML = "";
+    KP_KEYS.forEach(k => {
+      const b = document.createElement("button");
+      b.className = "kpBtn";
+      b.type = "button";
+      b.textContent = k;
+      b.addEventListener("click", () => keypadPress(k));
+      kpGrid.appendChild(b);
+    });
+  }
+  buildKeypad();
+
+  function renderTempDisplay(){
+    tempDisplay.textContent = tempDraft ? tempDraft : "--.-";
+  }
+  function clampToOneDecimal(str){
+    if(!str.includes(".")) return str;
+    const [a,b=""] = str.split(".");
+    return a + "." + b.slice(0,1);
+  }
+
+  function keypadPress(k){
+    if(k === "⌫"){
+      tempDraft = tempDraft.slice(0, -1);
+      renderTempDisplay();
+      return;
+    }
+    if(k === "."){
+      if(tempDraft.includes(".")) return;
+      if(tempDraft === "") tempDraft = "0";
+      tempDraft += ".";
+      renderTempDisplay();
+      return;
+    }
+    if(/[0-9]/.test(k)){
+      tempDraft += k;
+      tempDraft = clampToOneDecimal(tempDraft);
+      if(/^0[0-9]/.test(tempDraft) && !tempDraft.startsWith("0.")){
+        tempDraft = String(Number(tempDraft));
+      }
+      renderTempDisplay();
+      return;
+    }
+  }
+
+  function openTempModal(fieldId){
+    activeTempFieldId = fieldId;
+    const cur = document.getElementById(fieldId).value || "";
+    tempDraft = String(cur).trim();
+    renderTempDisplay();
+    tempModalBack.style.display = "flex";
+    tempModalBack.setAttribute("aria-hidden", "false");
+  }
+  function closeTempModal(){
+    tempModalBack.style.display = "none";
+    tempModalBack.setAttribute("aria-hidden", "true");
+  }
+
+  document.getElementById("kpClear").addEventListener("click", () => {
+    tempDraft = "";
+    renderTempDisplay();
+  });
+  document.getElementById("kpCancel").addEventListener("click", closeTempModal);
+
+  function validateTemp(idx, triggerNurseModal){
+    const inputId = idx === 1 ? "temp1" : "temp2";
+    const errId = idx === 1 ? "tempErr1" : "tempErr2";
+
+    const raw = String(document.getElementById(inputId).value ?? "").trim();
+    let target = (idx===1) ? visitor1 : visitor2;
+
+    if(!raw){
+      target.tempValid = false;
+      target.tempHigh = false;
+      document.getElementById(inputId).classList.remove("bad");
+      document.getElementById(errId).innerHTML = `<span class="ng">体温を入力してください。</span>`;
+      updateHighTempUI();
+      updateStartBtnState();
+      return;
+    }
+
+    const val = Number(raw);
+    if(Number.isNaN(val)){
+      target.tempValid = false;
+      target.tempHigh = false;
+      document.getElementById(inputId).classList.add("bad");
+      document.getElementById(errId).innerHTML = `<span class="ng">体温の形式が不正です（例：36.7）。</span>`;
+      updateHighTempUI();
+      updateStartBtnState();
+      return;
+    }
+
+    if(val < 34.0 || val > 42.0){
+      target.tempValid = false;
+      target.tempHigh = false;
+      document.getElementById(inputId).classList.add("bad");
+      document.getElementById(errId).innerHTML = `<span class="ng">入力値が範囲外です（34.0〜42.0）。</span>`;
+      updateHighTempUI();
+      updateStartBtnState();
+      return;
+    }
+
+    target.tempValid = true;
+    document.getElementById(inputId).classList.remove("bad");
+    document.getElementById(errId).innerHTML = `<span class="ok">OK</span>`;
+
+    if(val >= TEMP_ALERT){
+      target.tempHigh = true;
+      document.getElementById(errId).innerHTML = `<span class="ng">37.5℃以上です。受付は完了できません。</span>`;
+      updateHighTempUI();
+      updateStartBtnState();
+      if(triggerNurseModal){
+        beep();
+        const who = (idx===1) ? "面会者1" : "面会者2";
+        showNurseModal(`${who} の体温が <b>${val.toFixed(1)}℃</b> です。<br>受付は完了できません。スタッフへお声がけください。`);
+      }
+      return;
+    }
+
+    target.tempHigh = false;
+    updateHighTempUI();
+    updateStartBtnState();
+  }
+
+  document.getElementById("kpOk").addEventListener("click", () => {
+    const cleaned = String(tempDraft).trim();
+    const field = document.getElementById(activeTempFieldId);
+
+    if(cleaned === ""){
+      field.value = "";
+      closeTempModal();
+      // 入力対象に応じてvalidate
+      if(activeTempFieldId === "temp1") validateTemp(1, false);
+      if(activeTempFieldId === "temp2") validateTemp(2, false);
+      return;
+    }
+
+    let vStr = cleaned.endsWith(".") ? (cleaned + "0") : cleaned;
+    vStr = clampToOneDecimal(vStr);
+    const v = Number(vStr);
+    if(Number.isNaN(v)){
+      field.value = "";
+      closeTempModal();
+      if(activeTempFieldId === "temp1") validateTemp(1, false);
+      if(activeTempFieldId === "temp2") validateTemp(2, false);
+      return;
+    }
+
+    field.value = v.toFixed(1);
+    closeTempModal();
+
+    // 確定時に高体温なら看護師モーダル
+    if(activeTempFieldId === "temp1") validateTemp(1, true);
+    if(activeTempFieldId === "temp2") validateTemp(2, true);
+  });
+
+  // 体温欄タップでテンキーを開く
+  document.getElementById("temp1").addEventListener("click", () => openTempModal("temp1"));
+  document.getElementById("temp2").addEventListener("click", () => openTempModal("temp2"));
+
+  // ===== 初期エラー表示 =====
+  document.getElementById("tempErr1").innerHTML = `<span class="ng">体温を入力してください。</span>`;
+  document.getElementById("relErr1").innerHTML = `<span class="ng">関係性を選択してください。</span>`;
+
+  // ===== 時間表示 =====
+  function renderTimeMsg(){
+    const now = new Date();
+    const ok = inReceptionWindow(now);
+    document.getElementById("timeMsg").innerHTML = ok
+      ? `<span class="ok">現在 ${fmt(now)}：受付可能</span>`
+      : `<span class="ng">現在 ${fmt(now)}：受付時間外（13:00〜18:00）</span>`;
+  }
+  setInterval(renderTimeMsg, 5000);
+  renderTimeMsg();
+
+  // ===== ログ表示 =====
+  function renderLogs(){
+    const logs = loadLogs();
+    const body = document.getElementById("logBody");
+    body.innerHTML = "";
+    logs.slice().reverse().forEach(item => {
+      const v1 = `関係性:${item.v1_relation}<br>体温:${item.v1_temp}℃`;
+      const v2 = item.v2_enabled ? `関係性:${item.v2_relation}<br>体温:${item.v2_temp}℃` : "";
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${item.start}</td>
+        <td>${item.end}</td>
+        <td>${item.patientKana}</td>
+        <td>${item.reserve}</td>
+        <td>${item.reserveTime || ""}</td>
+        <td>${v1}</td>
+        <td>${v2}</td>
+        <td>${item.note || ""}</td>
+      `;
+      body.appendChild(tr);
+    });
+  }
+  renderLogs();
+
+  // ===== CSV出力 =====
+  function toCSV(rows){
+    const esc = (s) => `"${String(s ?? "").replaceAll('"','""')}"`;
+    const header = [
+      "start","end","patientKana","reserve","reserveTime",
+      "v1_relation","v1_temp",
+      "v2_enabled","v2_relation","v2_temp",
+      "note","createdAtISO"
+    ].map(esc).join(",");
+
+    const lines = rows.map(r => [
+      r.start,r.end,r.patientKana,r.reserve,r.reserveTime,
+      r.v1_relation,r.v1_temp,
+      r.v2_enabled,r.v2_relation,r.v2_temp,
+      r.note,r.createdAtISO
+    ].map(esc).join(","));
+
+    return [header, ...lines].join("\n");
+  }
+
+  document.getElementById("exportBtn").addEventListener("click", () => {
+    const logs = loadLogs();
+    const csv = toCSV(logs);
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `visit_logs_${new Date().toISOString().slice(0,10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  });
+
+  document.getElementById("clearBtn").addEventListener("click", () => {
+    if(confirm("端末内の全ログを削除します。よろしいですか？")){
+      localStorage.removeItem(STORAGE_KEY);
+      renderLogs();
+      document.getElementById("result").innerHTML = "";
+    }
+  });
+
+  // ===== 受付開始 =====
+  document.getElementById("startBtn").addEventListener("click", () => {
+    const now = new Date();
+
+    // 再チェック（念のため）
+    validatePatientKana();
+    validateReserveTime();
+    validateRelation(1); validateTemp(1, false);
+    if(visitor2Enabled){ validateRelation(2); validateTemp(2, false); }
+
+    if(anyHighTemp()){
+      beep();
+      // どちらが高いか表示（両方なら両方）
+      let msg = "";
+      if(visitor1.tempHigh){
+        msg += `面会者1 の体温が <b>${Number(document.getElementById("temp1").value).toFixed(1)}℃</b> です。<br>`;
+      }
+      if(visitor2Enabled && visitor2.tempHigh){
+        msg += `面会者2 の体温が <b>${Number(document.getElementById("temp2").value).toFixed(1)}℃</b> です。<br>`;
+      }
+      msg += `受付は完了できません。スタッフへお声がけください。`;
+      showNurseModal(msg);
+      return;
+    }
+
+    const v1ok = visitor1.relValid && visitor1.tempValid;
+    const v2ok = (!visitor2Enabled) || (visitor2.relValid && visitor2.tempValid);
+
+    if(!(selectedReserve && reserveTimeValid && patientKanaValid && v1ok && v2ok)){
+      document.getElementById("result").innerHTML = `<div class="ng">未入力の項目があります。</div>`;
+      updateStartBtnState();
+      return;
+    }
+
+    if(!inReceptionWindow(now)){
+      document.getElementById("result").innerHTML = `<div class="ng">受付時間外です（13:00〜18:00）。</div>`;
+      return;
+    }
+
+    const end = addMinutes(now, VISIT_MINUTES);
+    const record = {
+      start: fmt(now),
+      end: fmt(end),
+      patientKana: patientKana.value.trim(),
+      reserve: selectedReserve,
+      reserveTime: (selectedReserve === "あり") ? reserveSelect.value : "",
+      v1_relation: visitor1.relation,
+      v1_temp: Number(document.getElementById("temp1").value).toFixed(1),
+      v2_enabled: visitor2Enabled ? "1" : "0",
+      v2_relation: visitor2Enabled ? visitor2.relation : "",
+      v2_temp: visitor2Enabled ? Number(document.getElementById("temp2").value).toFixed(1) : "",
+      note: document.getElementById("note").value.trim(),
+      createdAtISO: now.toISOString()
+    };
+
+    const logs = loadLogs();
+    logs.push(record);
+    saveLogs(logs);
+    renderLogs();
+
+    const v2line = visitor2Enabled
+      ? `<div style="margin-top:6px;">面会者2：<b>${record.v2_relation}</b> ／ 体温 <b>${record.v2_temp}℃</b></div>`
+      : ``;
+
+    document.getElementById("result").innerHTML = `
+      <div class="ok">受付完了</div>
+      <div style="margin-top:6px;">患者名（カタカナ）：<b>${record.patientKana}</b></div>
+      <div style="margin-top:6px;">面会者1：<b>${record.v1_relation}</b> ／ 体温 <b>${record.v1_temp}℃</b></div>
+      ${v2line}
+      <div style="margin-top:6px;">面会開始：<b>${record.start}</b></div>
+      <div style="margin-top:6px;">面会終了予定：</div>
+      <div class="bigtime">${pad2(end.getHours())}:${pad2(end.getMinutes())}</div>
+      <div class="hint">※終了予定時刻までにご退室ください</div>
+    `;
+  });
+
+  // 初期化
+  handleReserveUI();
+  updateHighTempUI();
+  updateStartBtnState();
+</script>
+</body>
+</html>
