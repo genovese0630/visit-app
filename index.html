@@ -18,7 +18,6 @@
 
     .btns { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }
     .btns3 { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; }
-    .btns4 { display:grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 10px; }
 
     button.choice, button.smallBtn {
       border: 2px solid #cfd6e6; background: #fff; padding: 14px 10px;
@@ -47,7 +46,7 @@
     .ghost { background:#fff; border:2px solid #cfd6e6; color:#111; }
     .two { display:grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
-    .bigtime { font-size: 40px; font-weight: 900; letter-spacing: .5px; }
+    .bigtime { font-size: 44px; font-weight: 900; letter-spacing: .5px; }
     .ok { color:#0b7a2e; font-weight: 800; }
     .ng { color:#b00020; font-weight: 900; }
 
@@ -109,6 +108,17 @@
     }
     .kpBtn.primaryLike { background:#2b6cff; color:#fff; border-color:#2b6cff; }
     .kpBtn.dangerLike { background:#e53935; color:#fff; border-color:#e53935; }
+
+    /* 画面切替 */
+    .screen { display:none; }
+    .screen.active { display:block; }
+
+    .thanksBox{
+      background:#fff; border-radius:16px; padding:16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.08);
+      border:2px solid #d4daea;
+    }
+    .countDown { font-size: 14px; color:#555; margin-top:10px; }
   </style>
 </head>
 <body>
@@ -119,110 +129,134 @@
 
 <div class="wrap">
 
-  <div class="card">
-    <div class="label">① 面会予約</div>
-    <div class="btns" style="margin-top:10px;">
-      <button class="choice" data-group="reserve" data-value="あり">予約あり</button>
-      <button class="choice" data-group="reserve" data-value="なし">予約なし</button>
-    </div>
-
-    <div id="reserveTimeBlock" style="margin-top:12px; display:none;">
-      <div class="label">予約時刻（予約ありの場合のみ）</div>
-      <div class="hint">13:00〜18:00の範囲で選択（10分刻み）</div>
-      <select id="reserveTime" style="margin-top:10px;"></select>
-      <div id="reserveErr" class="hint" style="margin-top:8px;"></div>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="label">② 患者名（入力すると自動でカタカナに変換）</div>
-    <div class="hint">例：たなか たろう → タナカ タロウ（「ー」「・」「スペース」は可）</div>
-    <input id="patientKana" type="text" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false"
-           placeholder="例：タナカ タロウ" style="margin-top:10px;" />
-    <div id="kanaErr" class="hint" style="margin-top:8px;"></div>
-  </div>
-
-  <div class="card">
-    <div class="sectionTitle">③ 面会者情報</div>
-
-    <!-- 面会者1 -->
-    <div class="box">
-      <div class="label">面会者 1</div>
-
-      <div class="label" style="margin-top:10px;">患者との関係性</div>
-      <div class="hint">タップして選択</div>
-      <div class="btns3" id="relationBtns1" style="margin-top:10px;"></div>
-      <div id="relErr1" class="hint" style="margin-top:8px;"></div>
-
-      <div class="label" style="margin-top:12px;">体温（℃）</div>
-      <div class="hint">タップするとテンキーが出ます（例：36.7）</div>
-      <input id="temp1" type="text" inputmode="none" readonly placeholder="タップして入力（例：36.7）" style="margin-top:10px;" />
-      <div id="tempErr1" class="hint" style="margin-top:8px;"></div>
-    </div>
-
-    <!-- 追加ボタン -->
-    <div id="addVisitorRow" style="margin-top:12px;">
-      <button id="addVisitorBtn" class="smallBtn primaryLike" type="button">＋ 面会者を1人追加</button>
-      <div class="hint">※最大2名まで</div>
-    </div>
-
-    <!-- 面会者2（追加時のみ表示） -->
-    <div id="visitor2Block" class="box" style="margin-top:12px; display:none;">
-      <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
-        <div class="label">面会者 2</div>
-        <button id="removeVisitorBtn" class="smallBtn dangerLike" type="button">削除</button>
+  <!-- ========= 入力画面 ========= -->
+  <div id="screenForm" class="screen active">
+    <div class="card">
+      <div class="label">① 面会予約</div>
+      <div class="btns" style="margin-top:10px;">
+        <button class="choice" data-group="reserve" data-value="あり" type="button">予約あり</button>
+        <button class="choice" data-group="reserve" data-value="なし" type="button">予約なし</button>
       </div>
 
-      <div class="label" style="margin-top:10px;">患者との関係性</div>
-      <div class="hint">タップして選択</div>
-      <div class="btns3" id="relationBtns2" style="margin-top:10px;"></div>
-      <div id="relErr2" class="hint" style="margin-top:8px;"></div>
-
-      <div class="label" style="margin-top:12px;">体温（℃）</div>
-      <div class="hint">タップするとテンキーが出ます（例：36.7）</div>
-      <input id="temp2" type="text" inputmode="none" readonly placeholder="タップして入力（例：36.7）" style="margin-top:10px;" />
-      <div id="tempErr2" class="hint" style="margin-top:8px;"></div>
+      <div id="reserveTimeBlock" style="margin-top:12px; display:none;">
+        <div class="label">予約時刻（予約ありの場合のみ）</div>
+        <div class="hint">13:00〜18:00の範囲で選択（10分刻み）</div>
+        <select id="reserveTime" style="margin-top:10px;"></select>
+        <div id="reserveErr" class="hint" style="margin-top:8px;"></div>
+      </div>
     </div>
 
-    <div id="tempAlert" style="display:none;" class="alertBox">
-      <div class="alertTitle">37.5℃以上の面会者がいます。看護師を呼んでください。</div>
-      <div class="alertText">受付は完了できません。スタッフへお声がけください。</div>
+    <div class="card">
+      <div class="label">② 患者名（自由入力）</div>
+      <div class="hint">ひらがな／カタカナ／漢字 どれでも可（自動変換なし）</div>
+      <input id="patientName" type="text" autocomplete="off" placeholder="例：田中 太郎 / たなか たろう / タナカ タロウ" style="margin-top:10px;" />
+      <div id="patientErr" class="hint" style="margin-top:8px;"></div>
+    </div>
+
+    <div class="card">
+      <div class="label">③ 部屋番号（任意）</div>
+      <div class="hint">例：305 / 305号室 など</div>
+      <input id="roomNo" type="text" autocomplete="off" placeholder="例：305" style="margin-top:10px;" />
+    </div>
+
+    <div class="card">
+      <div class="sectionTitle">④ 面会者情報</div>
+
+      <!-- 面会者1 -->
+      <div class="box">
+        <div class="label">面会者 1</div>
+
+        <div class="label" style="margin-top:10px;">患者との関係性</div>
+        <div class="hint">タップして選択</div>
+        <div class="btns3" id="relationBtns1" style="margin-top:10px;"></div>
+        <div id="relErr1" class="hint" style="margin-top:8px;"></div>
+
+        <div class="label" style="margin-top:12px;">体温（℃）</div>
+        <div class="hint">タップするとテンキーが出ます（例：36.7）</div>
+        <input id="temp1" type="text" inputmode="none" readonly placeholder="タップして入力（例：36.7）" style="margin-top:10px;" />
+        <div id="tempErr1" class="hint" style="margin-top:8px;"></div>
+      </div>
+
+      <!-- 追加ボタン -->
+      <div id="addVisitorRow" style="margin-top:12px;">
+        <button id="addVisitorBtn" class="smallBtn primaryLike" type="button">＋ 面会者を1人追加</button>
+        <div class="hint">※最大2名まで</div>
+      </div>
+
+      <!-- 面会者2（追加時のみ表示） -->
+      <div id="visitor2Block" class="box" style="margin-top:12px; display:none;">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+          <div class="label">面会者 2</div>
+          <button id="removeVisitorBtn" class="smallBtn dangerLike" type="button">削除</button>
+        </div>
+
+        <div class="label" style="margin-top:10px;">患者との関係性</div>
+        <div class="hint">タップして選択</div>
+        <div class="btns3" id="relationBtns2" style="margin-top:10px;"></div>
+        <div id="relErr2" class="hint" style="margin-top:8px;"></div>
+
+        <div class="label" style="margin-top:12px;">体温（℃）</div>
+        <div class="hint">タップするとテンキーが出ます（例：36.7）</div>
+        <input id="temp2" type="text" inputmode="none" readonly placeholder="タップして入力（例：36.7）" style="margin-top:10px;" />
+        <div id="tempErr2" class="hint" style="margin-top:8px;"></div>
+      </div>
+
+      <div id="tempAlert" style="display:none;" class="alertBox">
+        <div class="alertTitle">37.5℃以上の面会者がいます。看護師を呼んでください。</div>
+        <div class="alertText">受付は完了できません。スタッフへお声がけください。</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="label">⑤ （任意）補足</div>
+      <div class="hint">例：備考など</div>
+      <input id="note" type="text" placeholder="例：マスク着用" style="margin-top:10px;" />
+    </div>
+
+    <div class="card">
+      <div class="label">⑥ 受付（開始）</div>
+      <div class="hint">開始ボタンを押すと「受付時刻」と「終了予定（+10分）」が記録されます</div>
+      <div id="timeMsg" class="hint" style="margin-top:10px;"></div>
+      <button id="startBtn" class="primary" style="margin-top:10px;" disabled>受付開始（今から10分）</button>
+      <div id="resultInline" style="margin-top:14px;"></div>
+    </div>
+
+    <div class="card">
+      <div class="label">管理（端末内に保存された受付ログ）</div>
+      <div class="two" style="margin-top:10px;">
+        <button id="exportBtn" class="primary ghost" type="button">CSV出力</button>
+        <button id="clearBtn" class="primary danger" type="button">全ログ削除</button>
+      </div>
+      <div class="hint muted" style="margin-top:10px;">
+        ※この版は「iPad内に保存」です。複数端末で共有したい場合はサーバ保存版にできます。
+      </div>
+      <div style="margin-top:12px; overflow:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>受付</th><th>終了予定</th><th>患者名</th><th>部屋</th><th>予約</th><th>予約時刻</th>
+              <th>面会者1</th><th>面会者2</th><th>補足</th>
+            </tr>
+          </thead>
+          <tbody id="logBody"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
-  <div class="card">
-    <div class="label">④ （任意）補足</div>
-    <div class="hint">例：病室番号など（院内規程に従ってください）</div>
-    <input id="note" type="text" placeholder="例：305号室" style="margin-top:10px;" />
-  </div>
+  <!-- ========= 完了画面（次の人に前の入力を見せない） ========= -->
+  <div id="screenDone" class="screen">
+    <div class="thanksBox">
+      <div class="ok" style="font-size:20px;">受付完了</div>
+      <div style="margin-top:10px;">面会終了予定：</div>
+      <div class="bigtime" id="doneEndTime">--:--</div>
+      <div class="hint" style="margin-top:8px;">※終了予定時刻までにご退室ください</div>
 
-  <div class="card">
-    <div class="label">⑤ 受付（開始）</div>
-    <div class="hint">開始ボタンを押すと「受付時刻」と「終了予定（+10分）」が記録されます</div>
-    <div id="timeMsg" class="hint" style="margin-top:10px;"></div>
-    <button id="startBtn" class="primary" style="margin-top:10px;" disabled>受付開始（今から10分）</button>
-    <div id="result" style="margin-top:14px;"></div>
-  </div>
+      <div class="countDown" id="autoResetMsg"></div>
 
-  <div class="card">
-    <div class="label">管理（端末内に保存された受付ログ）</div>
-    <div class="two" style="margin-top:10px;">
-      <button id="exportBtn" class="primary ghost">CSV出力</button>
-      <button id="clearBtn" class="primary danger">全ログ削除</button>
-    </div>
-    <div class="hint muted" style="margin-top:10px;">
-      ※この版は「iPad内に保存」です。複数端末で共有したい場合はサーバ保存版にできます。
-    </div>
-    <div style="margin-top:12px; overflow:auto;">
-      <table>
-        <thead>
-          <tr>
-            <th>受付</th><th>終了予定</th><th>患者名(ｶﾀｶﾅ)</th><th>予約</th><th>予約時刻</th>
-            <th>面会者1</th><th>面会者2</th><th>補足</th>
-          </tr>
-        </thead>
-        <tbody id="logBody"></tbody>
-      </table>
+      <div style="margin-top:14px;">
+        <button id="nextBtn" class="primary" type="button">次の受付へ</button>
+      </div>
     </div>
   </div>
 
@@ -234,7 +268,7 @@
     <h2 id="nurseTitle">看護師を呼んでください</h2>
     <p id="nurseMsg">高体温の面会者がいます。受付は完了できません。スタッフへお声がけください。</p>
     <div class="closeRow">
-      <button class="primary danger" id="closeNurseModalBtn">閉じる</button>
+      <button class="primary danger" id="closeNurseModalBtn" type="button">閉じる</button>
     </div>
   </div>
 </div>
@@ -265,19 +299,17 @@
   const VISIT_MINUTES = 10;
   const OPEN_HOUR = 13;
   const CLOSE_HOUR = 18; // 18:00以降はNG
-  const STORAGE_KEY = "visit_logs_v5";
-
-  // 全角カタカナ + 長音ー + 中点・ + スペース（全角/半角）を許可
-  const KATAKANA_RE = /^[\u30A0-\u30FFー・ 　]+$/;
-
-  // 体温閾値
   const TEMP_ALERT = 37.5;
+  const STORAGE_KEY = "visit_logs_v6";
+
+  // 受付完了後、自動で次の受付へ戻す秒数（不要なら 0 に）
+  const AUTO_RESET_SECONDS = 15;
 
   // ===== 状態 =====
   let selectedReserve = "";
   let reserveTimeValid = true;
 
-  let patientKanaValid = false;
+  let patientValid = false;
 
   // 面会者1（必須）
   let visitor1 = { relation: "", temp: "", relValid:false, tempValid:false, tempHigh:false };
@@ -290,14 +322,17 @@
   let activeTempFieldId = "temp1";
   let tempDraft = "";
 
+  // 自動戻りタイマー
+  let resetTimer = null;
+  let resetRemain = 0;
+
   // ===== ユーティリティ =====
   function pad2(n){ return String(n).padStart(2,"0"); }
   function fmt(dt){
     return `${dt.getFullYear()}-${pad2(dt.getMonth()+1)}-${pad2(dt.getDate())} ${pad2(dt.getHours())}:${pad2(dt.getMinutes())}`;
   }
-  function addMinutes(dt, mins){
-    return new Date(dt.getTime() + mins*60*1000);
-  }
+  function hm(dt){ return `${pad2(dt.getHours())}:${pad2(dt.getMinutes())}`; }
+  function addMinutes(dt, mins){ return new Date(dt.getTime() + mins*60*1000); }
   function inReceptionWindow(dt){
     const h = dt.getHours();
     const m = dt.getMinutes();
@@ -310,14 +345,7 @@
     try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); }
     catch { return []; }
   }
-  function saveLogs(logs){
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(logs));
-  }
-
-  // ひらがな→カタカナ
-  function hiraToKata(str){
-    return str.replace(/[\u3041-\u3096]/g, ch => String.fromCharCode(ch.charCodeAt(0) + 0x60));
-  }
+  function saveLogs(logs){ localStorage.setItem(STORAGE_KEY, JSON.stringify(logs)); }
 
   // 簡易ビープ
   let audioCtx = null;
@@ -351,11 +379,17 @@
     btn.disabled = !(
       selectedReserve &&
       reserveTimeValid &&
-      patientKanaValid &&
+      patientValid &&
       v1ok &&
       v2ok &&
       !anyHighTemp()
     );
+  }
+
+  function showScreen(id){
+    document.getElementById("screenForm").classList.remove("active");
+    document.getElementById("screenDone").classList.remove("active");
+    document.getElementById(id).classList.add("active");
   }
 
   // ===== 予約時刻 =====
@@ -424,56 +458,38 @@
     const group = btn.dataset.group;
     const value = btn.dataset.value;
 
+    // reserveボタンだけ処理
+    if(group !== "reserve") return;
+
     document.querySelectorAll(`button.choice[data-group="${group}"]`).forEach(x => x.classList.remove("selected"));
     btn.classList.add("selected");
 
-    if(group === "reserve") {
-      selectedReserve = value;
-      handleReserveUI();
-    }
+    selectedReserve = value;
+    handleReserveUI();
     updateStartBtnState();
   });
 
-  // ===== 患者名（自動変換 + バリデーション） =====
-  const patientKana = document.getElementById("patientKana");
-  const kanaErr = document.getElementById("kanaErr");
+  // ===== 患者名（自由入力） =====
+  const patientName = document.getElementById("patientName");
+  const patientErr = document.getElementById("patientErr");
 
-  function normalizePatientKana(){
-    const before = patientKana.value;
-    const after = hiraToKata(before);
-    if(after !== before){
-      const pos = patientKana.selectionStart;
-      patientKana.value = after;
-      try { patientKana.setSelectionRange(pos, pos); } catch {}
-    }
-  }
-
-  function validatePatientKana(){
-    normalizePatientKana();
-    const v = patientKana.value.trim();
-
+  function validatePatientName(){
+    const v = patientName.value.trim();
     if(!v){
-      patientKanaValid = false;
-      patientKana.classList.remove("bad");
-      kanaErr.innerHTML = `<span class="ng">患者名を入力してください（自動でカタカナ変換されます）。</span>`;
+      patientValid = false;
+      patientName.classList.remove("bad");
+      patientErr.innerHTML = `<span class="ng">患者名を入力してください。</span>`;
       updateStartBtnState();
       return;
     }
-    if(!KATAKANA_RE.test(v)){
-      patientKanaValid = false;
-      patientKana.classList.add("bad");
-      kanaErr.innerHTML = `<span class="ng">カタカナ以外が含まれています（記号は「ー」「・」「スペース」のみ可）。</span>`;
-      updateStartBtnState();
-      return;
-    }
-    patientKanaValid = true;
-    patientKana.classList.remove("bad");
-    kanaErr.innerHTML = `<span class="ok">OK（カタカナ）</span>`;
+    patientValid = true;
+    patientName.classList.remove("bad");
+    patientErr.innerHTML = `<span class="ok">OK</span>`;
     updateStartBtnState();
   }
-  patientKana.addEventListener("input", validatePatientKana);
-  patientKana.addEventListener("blur", validatePatientKana);
-  validatePatientKana();
+  patientName.addEventListener("input", validatePatientName);
+  patientName.addEventListener("blur", validatePatientName);
+  validatePatientName();
 
   // ===== 関係性ボタン（面会者1/2） =====
   function renderRelationButtons(containerId, visitorIndex){
@@ -550,7 +566,6 @@
     visitor2 = { relation: "", temp: "", relValid:false, tempValid:false, tempHigh:false };
     visitor2Block.style.display = "block";
     addRow.style.display = "none";
-    // リセット表示
     document.querySelectorAll(`button.choice[data-group="relation2"]`).forEach(x => x.classList.remove("selected"));
     document.getElementById("temp2").value = "";
     document.getElementById("tempErr2").innerHTML = `<span class="ng">体温を入力してください。</span>`;
@@ -585,18 +600,13 @@
 
   function updateHighTempUI(){
     const alert = document.getElementById("tempAlert");
-    if(anyHighTemp()){
-      alert.style.display = "block";
-    } else {
-      alert.style.display = "none";
-    }
+    alert.style.display = anyHighTemp() ? "block" : "none";
   }
 
   // ===== 体温テンキー（共通） =====
   const tempModalBack = document.getElementById("tempModalBack");
   const tempDisplay = document.getElementById("tempDisplay");
   const kpGrid = document.getElementById("kpGrid");
-
   const KP_KEYS = ["1","2","3","4","5","6","7","8","9",".","0","⌫"];
 
   function buildKeypad(){
@@ -612,9 +622,7 @@
   }
   buildKeypad();
 
-  function renderTempDisplay(){
-    tempDisplay.textContent = tempDraft ? tempDraft : "--.-";
-  }
+  function renderTempDisplay(){ tempDisplay.textContent = tempDraft ? tempDraft : "--.-"; }
   function clampToOneDecimal(str){
     if(!str.includes(".")) return str;
     const [a,b=""] = str.split(".");
@@ -658,26 +666,21 @@
     tempModalBack.setAttribute("aria-hidden", "true");
   }
 
-  document.getElementById("kpClear").addEventListener("click", () => {
-    tempDraft = "";
-    renderTempDisplay();
-  });
+  document.getElementById("kpClear").addEventListener("click", () => { tempDraft = ""; renderTempDisplay(); });
   document.getElementById("kpCancel").addEventListener("click", closeTempModal);
 
   function validateTemp(idx, triggerNurseModal){
     const inputId = idx === 1 ? "temp1" : "temp2";
     const errId = idx === 1 ? "tempErr1" : "tempErr2";
-
     const raw = String(document.getElementById(inputId).value ?? "").trim();
-    let target = (idx===1) ? visitor1 : visitor2;
+    const target = (idx===1) ? visitor1 : visitor2;
 
     if(!raw){
       target.tempValid = false;
       target.tempHigh = false;
       document.getElementById(inputId).classList.remove("bad");
       document.getElementById(errId).innerHTML = `<span class="ng">体温を入力してください。</span>`;
-      updateHighTempUI();
-      updateStartBtnState();
+      updateHighTempUI(); updateStartBtnState();
       return;
     }
 
@@ -687,8 +690,7 @@
       target.tempHigh = false;
       document.getElementById(inputId).classList.add("bad");
       document.getElementById(errId).innerHTML = `<span class="ng">体温の形式が不正です（例：36.7）。</span>`;
-      updateHighTempUI();
-      updateStartBtnState();
+      updateHighTempUI(); updateStartBtnState();
       return;
     }
 
@@ -697,8 +699,7 @@
       target.tempHigh = false;
       document.getElementById(inputId).classList.add("bad");
       document.getElementById(errId).innerHTML = `<span class="ng">入力値が範囲外です（34.0〜42.0）。</span>`;
-      updateHighTempUI();
-      updateStartBtnState();
+      updateHighTempUI(); updateStartBtnState();
       return;
     }
 
@@ -709,8 +710,7 @@
     if(val >= TEMP_ALERT){
       target.tempHigh = true;
       document.getElementById(errId).innerHTML = `<span class="ng">37.5℃以上です。受付は完了できません。</span>`;
-      updateHighTempUI();
-      updateStartBtnState();
+      updateHighTempUI(); updateStartBtnState();
       if(triggerNurseModal){
         beep();
         const who = (idx===1) ? "面会者1" : "面会者2";
@@ -720,8 +720,7 @@
     }
 
     target.tempHigh = false;
-    updateHighTempUI();
-    updateStartBtnState();
+    updateHighTempUI(); updateStartBtnState();
   }
 
   document.getElementById("kpOk").addEventListener("click", () => {
@@ -731,7 +730,6 @@
     if(cleaned === ""){
       field.value = "";
       closeTempModal();
-      // 入力対象に応じてvalidate
       if(activeTempFieldId === "temp1") validateTemp(1, false);
       if(activeTempFieldId === "temp2") validateTemp(2, false);
       return;
@@ -751,12 +749,10 @@
     field.value = v.toFixed(1);
     closeTempModal();
 
-    // 確定時に高体温なら看護師モーダル
     if(activeTempFieldId === "temp1") validateTemp(1, true);
     if(activeTempFieldId === "temp2") validateTemp(2, true);
   });
 
-  // 体温欄タップでテンキーを開く
   document.getElementById("temp1").addEventListener("click", () => openTempModal("temp1"));
   document.getElementById("temp2").addEventListener("click", () => openTempModal("temp2"));
 
@@ -787,7 +783,8 @@
       tr.innerHTML = `
         <td>${item.start}</td>
         <td>${item.end}</td>
-        <td>${item.patientKana}</td>
+        <td>${item.patientName}</td>
+        <td>${item.roomNo || ""}</td>
         <td>${item.reserve}</td>
         <td>${item.reserveTime || ""}</td>
         <td>${v1}</td>
@@ -803,14 +800,14 @@
   function toCSV(rows){
     const esc = (s) => `"${String(s ?? "").replaceAll('"','""')}"`;
     const header = [
-      "start","end","patientKana","reserve","reserveTime",
+      "start","end","patientName","roomNo","reserve","reserveTime",
       "v1_relation","v1_temp",
       "v2_enabled","v2_relation","v2_temp",
       "note","createdAtISO"
     ].map(esc).join(",");
 
     const lines = rows.map(r => [
-      r.start,r.end,r.patientKana,r.reserve,r.reserveTime,
+      r.start,r.end,r.patientName,r.roomNo,r.reserve,r.reserveTime,
       r.v1_relation,r.v1_temp,
       r.v2_enabled,r.v2_relation,r.v2_temp,
       r.note,r.createdAtISO
@@ -837,23 +834,98 @@
     if(confirm("端末内の全ログを削除します。よろしいですか？")){
       localStorage.removeItem(STORAGE_KEY);
       renderLogs();
-      document.getElementById("result").innerHTML = "";
+      document.getElementById("resultInline").innerHTML = "";
     }
   });
+
+  // ===== 完了画面 → 次の受付へ =====
+  function clearFormAll(){
+    // 予約
+    selectedReserve = "";
+    document.querySelectorAll(`button.choice[data-group="reserve"]`).forEach(x => x.classList.remove("selected"));
+    reserveSelect.value = "";
+    document.getElementById("reserveTimeBlock").style.display = "none";
+    reserveTimeValid = true;
+    document.getElementById("reserveErr").innerHTML = "";
+    reserveSelect.classList.remove("bad");
+
+    // 患者名/部屋/補足
+    patientName.value = "";
+    document.getElementById("roomNo").value = "";
+    document.getElementById("note").value = "";
+    patientValid = false;
+    patientErr.innerHTML = `<span class="ng">患者名を入力してください。</span>`;
+
+    // 面会者1
+    visitor1 = { relation: "", temp: "", relValid:false, tempValid:false, tempHigh:false };
+    document.querySelectorAll(`button.choice[data-group="relation1"]`).forEach(x => x.classList.remove("selected"));
+    document.getElementById("temp1").value = "";
+    document.getElementById("relErr1").innerHTML = `<span class="ng">関係性を選択してください。</span>`;
+    document.getElementById("tempErr1").innerHTML = `<span class="ng">体温を入力してください。</span>`;
+
+    // 面会者2を消す（必ず非表示にして次の人に見せない）
+    visitor2Enabled = false;
+    visitor2 = { relation: "", temp: "", relValid:false, tempValid:false, tempHigh:false };
+    document.getElementById("visitor2Block").style.display = "none";
+    document.getElementById("addVisitorRow").style.display = "block";
+    document.querySelectorAll(`button.choice[data-group="relation2"]`).forEach(x => x.classList.remove("selected"));
+    document.getElementById("temp2").value = "";
+    document.getElementById("relErr2").innerHTML = ``;
+    document.getElementById("tempErr2").innerHTML = ``;
+
+    // 高体温アラート
+    updateHighTempUI();
+
+    // インライン結果
+    document.getElementById("resultInline").innerHTML = "";
+
+    // ボタン状態更新
+    updateStartBtnState();
+  }
+
+  function startAutoResetCountdown(){
+    const msg = document.getElementById("autoResetMsg");
+    if(AUTO_RESET_SECONDS <= 0){
+      msg.textContent = "";
+      return;
+    }
+    resetRemain = AUTO_RESET_SECONDS;
+    msg.textContent = `※ ${resetRemain} 秒後に自動で「次の受付」へ移動します`;
+
+    if(resetTimer) clearInterval(resetTimer);
+    resetTimer = setInterval(() => {
+      resetRemain -= 1;
+      if(resetRemain <= 0){
+        clearInterval(resetTimer);
+        resetTimer = null;
+        goNext();
+      } else {
+        msg.textContent = `※ ${resetRemain} 秒後に自動で「次の受付」へ移動します`;
+      }
+    }, 1000);
+  }
+
+  function goNext(){
+    if(resetTimer){ clearInterval(resetTimer); resetTimer = null; }
+    document.getElementById("autoResetMsg").textContent = "";
+    clearFormAll();     // ★前の面会者情報を完全に消す
+    showScreen("screenForm");
+  }
+
+  document.getElementById("nextBtn").addEventListener("click", goNext);
 
   // ===== 受付開始 =====
   document.getElementById("startBtn").addEventListener("click", () => {
     const now = new Date();
 
     // 再チェック（念のため）
-    validatePatientKana();
+    validatePatientName();
     validateReserveTime();
     validateRelation(1); validateTemp(1, false);
     if(visitor2Enabled){ validateRelation(2); validateTemp(2, false); }
 
     if(anyHighTemp()){
       beep();
-      // どちらが高いか表示（両方なら両方）
       let msg = "";
       if(visitor1.tempHigh){
         msg += `面会者1 の体温が <b>${Number(document.getElementById("temp1").value).toFixed(1)}℃</b> です。<br>`;
@@ -869,22 +941,25 @@
     const v1ok = visitor1.relValid && visitor1.tempValid;
     const v2ok = (!visitor2Enabled) || (visitor2.relValid && visitor2.tempValid);
 
-    if(!(selectedReserve && reserveTimeValid && patientKanaValid && v1ok && v2ok)){
-      document.getElementById("result").innerHTML = `<div class="ng">未入力の項目があります。</div>`;
+    if(!(selectedReserve && reserveTimeValid && patientValid && v1ok && v2ok)){
+      document.getElementById("resultInline").innerHTML = `<div class="ng">未入力の項目があります。</div>`;
       updateStartBtnState();
       return;
     }
 
     if(!inReceptionWindow(now)){
-      document.getElementById("result").innerHTML = `<div class="ng">受付時間外です（13:00〜18:00）。</div>`;
+      document.getElementById("resultInline").innerHTML = `<div class="ng">受付時間外です（13:00〜18:00）。</div>`;
       return;
     }
 
     const end = addMinutes(now, VISIT_MINUTES);
+
+    // ログ保存（iPad内）
     const record = {
       start: fmt(now),
       end: fmt(end),
-      patientKana: patientKana.value.trim(),
+      patientName: patientName.value.trim(),
+      roomNo: document.getElementById("roomNo").value.trim(),
       reserve: selectedReserve,
       reserveTime: (selectedReserve === "あり") ? reserveSelect.value : "",
       v1_relation: visitor1.relation,
@@ -901,20 +976,10 @@
     saveLogs(logs);
     renderLogs();
 
-    const v2line = visitor2Enabled
-      ? `<div style="margin-top:6px;">面会者2：<b>${record.v2_relation}</b> ／ 体温 <b>${record.v2_temp}℃</b></div>`
-      : ``;
-
-    document.getElementById("result").innerHTML = `
-      <div class="ok">受付完了</div>
-      <div style="margin-top:6px;">患者名（カタカナ）：<b>${record.patientKana}</b></div>
-      <div style="margin-top:6px;">面会者1：<b>${record.v1_relation}</b> ／ 体温 <b>${record.v1_temp}℃</b></div>
-      ${v2line}
-      <div style="margin-top:6px;">面会開始：<b>${record.start}</b></div>
-      <div style="margin-top:6px;">面会終了予定：</div>
-      <div class="bigtime">${pad2(end.getHours())}:${pad2(end.getMinutes())}</div>
-      <div class="hint">※終了予定時刻までにご退室ください</div>
-    `;
+    // ★画面遷移（前の情報を次に見せない）
+    document.getElementById("doneEndTime").textContent = hm(end);
+    showScreen("screenDone");
+    startAutoResetCountdown();
   });
 
   // 初期化
